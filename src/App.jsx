@@ -3,7 +3,7 @@ import SearchBar from './components/SearchBar'
 import MovieCard from './components/MovieCard'
 import MovieDetail from './components/MovieDetail'
 import { searchMovies, getMovieDetails } from './utils/api'
-import { getSavedMovies, saveMovie, removeMovie, isMovieSaved } from './utils/storage'
+import { getSavedMovies, saveMovie, removeMovie } from './utils/storage'
 import './App.css'
 
 export default function App() {
@@ -15,9 +15,11 @@ export default function App() {
   const [apiError, setApiError] = useState(null)
   const [searchPerformed, setSearchPerformed] = useState(false)
 
-  // Load saved movies from localStorage on mount
+  // Load saved movies from server on mount
   useEffect(() => {
-    setSavedMovies(getSavedMovies())
+    getSavedMovies()
+      .then(setSavedMovies)
+      .catch(() => {})
   }, [])
 
   async function handleSearch(query) {
@@ -49,14 +51,22 @@ export default function App() {
     }
   }
 
-  function handleSave(movie, note) {
-    saveMovie(movie, note)
-    setSavedMovies(getSavedMovies())
+  async function handleSave(movie, note) {
+    try {
+      await saveMovie(movie, note)
+      setSavedMovies(await getSavedMovies())
+    } catch (err) {
+      setApiError(err.message)
+    }
   }
 
-  function handleRemove(imdbID) {
-    removeMovie(imdbID)
-    setSavedMovies(getSavedMovies())
+  async function handleRemove(imdbID) {
+    try {
+      await removeMovie(imdbID)
+      setSavedMovies(await getSavedMovies())
+    } catch (err) {
+      setApiError(err.message)
+    }
   }
 
   const moviesToShow = showSavedOnly ? savedMovies : results
@@ -89,7 +99,7 @@ export default function App() {
               <MovieCard
                 key={movie.imdbID}
                 movie={movie}
-                isSaved={isMovieSaved(movie.imdbID)}
+                isSaved={savedMovies.some(m => m.imdbID === movie.imdbID)}
                 onSave={handleSave}
                 onRemove={handleRemove}
                 onClickTitle={handleClickTitle}

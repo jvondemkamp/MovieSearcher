@@ -3,7 +3,7 @@ const BASE_URL = 'https://www.omdbapi.com'
 
 async function fetchApi(params) {
   if (!API_KEY) {
-    throw new Error('OMDB API key is not configured. Add VITE_OMDB_API_KEY to your .env file.')
+    throw new Error('OMDB API key is not configured.')
   }
   const url = `${BASE_URL}/?apikey=${encodeURIComponent(API_KEY)}&${params}`
   const res = await fetch(url)
@@ -12,7 +12,7 @@ async function fetchApi(params) {
 }
 
 export async function searchMovies(query) {
-  const data = await fetchApi(`s=${encodeURIComponent(query.trim())}`)
+  const data = await fetchApi(`s=${encodeURIComponent(query.trim())}&type=movie`)
 
   if (data.Response === 'False') return { movies: [], error: data.Error }
 

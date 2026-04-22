@@ -1,26 +1,26 @@
-const KEY = 'movieSearcher_savedMovies'
+const API_BASE = '/api'
 
-export function getSavedMovies() {
-  try { return JSON.parse(localStorage.getItem(KEY)) || [] }
-  catch { return [] }
+export async function getSavedMovies() {
+  const res = await fetch(`${API_BASE}/saved`)
+  if (!res.ok) throw new Error('Failed to fetch saved movies.')
+  return res.json()
 }
 
-function writeSaved(movies) {
-  localStorage.setItem(KEY, JSON.stringify(movies))
-}
-
-export function saveMovie(movie, note = '') {
-  const saved = getSavedMovies()
-  if (saved.some(m => m.imdbID === movie.imdbID)) return false
-  saved.push({ ...movie, note, savedAt: new Date().toISOString() })
-  writeSaved(saved)
+export async function saveMovie(movie, note = '') {
+  const res = await fetch(`${API_BASE}/saved`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ movie, note }),
+  })
+  if (res.status === 409) return false
+  if (!res.ok) throw new Error('Failed to save movie.')
   return true
 }
 
-export function removeMovie(imdbID) {
-  writeSaved(getSavedMovies().filter(m => m.imdbID !== imdbID))
+export async function removeMovie(imdbID) {
+  const res = await fetch(`${API_BASE}/saved/${encodeURIComponent(imdbID)}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) throw new Error('Failed to remove movie.')
 }
 
-export function isMovieSaved(imdbID) {
-  return getSavedMovies().some(m => m.imdbID === imdbID)
-}
